@@ -2,10 +2,11 @@ package backend
 
 import (
 	"errors"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/hashicorp/mdns"
 	"net"
 	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/hashicorp/mdns"
 )
 
 // TODO: check if auth in config is valid
@@ -14,13 +15,13 @@ func IsLoggedIn() bool {
 }
 
 type IpMsg struct{ net.IP }
-type ErrMsg struct{ err error }
+type ErrMsg struct{ Err error }
 
-func (e ErrMsg) Error() string { return e.err.Error() }
+func (e ErrMsg) Error() string { return e.Err.Error() }
 
 func GetIp() tea.Msg {
-	entriesCh := make(chan *mdns.ServiceEntry, 4)
-	ipCh := make(chan net.IP, 4)
+	entriesCh := make(chan *mdns.ServiceEntry)
+	ipCh := make(chan net.IP)
 	defer close(entriesCh)
 	defer close(ipCh)
 
@@ -30,8 +31,8 @@ func GetIp() tea.Msg {
 		}
 	}()
 
-	if err := mdns.Lookup("_hue._tcp.local.", entriesCh); err != nil {
-		return ErrMsg{err}
+	if err := mdns.Lookup("_hue._tcp", entriesCh); err != nil {
+		return ErrMsg{errors.New("LOOKUP ERROR")}
 	}
 
 	select {

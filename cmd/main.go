@@ -15,13 +15,13 @@ func main() {
 	p := frontend.NewProgram()
 	m, err := p.Run()
 	if err != nil {
-		fmt.Printf("err: %v\n", err)
+		fmt.Printf("frontend err: %v\n", err)
 		os.Exit(1)
 	}
 
 	model := m.(frontend.Model)
 	if model.Err != nil {
-		fmt.Printf("err: %v\n", err)
+		fmt.Printf("backend err: %v\n", model.Err)
 		os.Exit(1)
 	}
 

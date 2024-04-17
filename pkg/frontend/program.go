@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/m4tthewde/huego/pkg/backend"
 	"net"
@@ -17,21 +16,21 @@ type Model struct {
 	loggedIn   bool
 	fetchingIp bool
 	ip         net.IP
-	spinner    spinner.Model
 }
 
 func initialModel() Model {
-	s := spinner.New()
-	s.Spinner = spinner.Dot
 	return Model{
 		loggedIn:   backend.IsLoggedIn(),
 		fetchingIp: false,
-		spinner:    s,
 	}
 }
 
 func (m Model) Init() tea.Cmd {
-	return m.spinner.Tick
+	if !m.loggedIn {
+		return backend.GetIp
+	} else {
+		return nil
+	}
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -43,10 +42,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case backend.IpMsg:
 		m.ip = msg.IP
-		return m, tea.Quit
+		m.fetchingIp = false
+		return m, nil
 	case backend.ErrMsg:
-		m.Err = msg
+		m.Err = msg.Err
 		return m, tea.Quit
+
 	default:
 		if !m.loggedIn {
 			if !m.fetchingIp {
@@ -54,10 +55,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, backend.GetIp
 			}
 		}
-
-		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
-		return m, cmd
 	}
 
 	return m, nil
@@ -66,9 +63,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	if !m.loggedIn {
 		if m.ip == nil {
-			return m.spinner.View() + "Fetching IP adress of your Hue Bridge"
+			return "Fetching IP adress of Hue Bridge"
 		} else {
-			return fmt.Sprintf("%s Authenticating with Hue Bridge at %v", m.spinner.View(), m.ip)
+			return fmt.Sprintf("Authenticating with Hue Bridge %v", m.ip)
 		}
 	} else {
 		return "TODO: lamps"
